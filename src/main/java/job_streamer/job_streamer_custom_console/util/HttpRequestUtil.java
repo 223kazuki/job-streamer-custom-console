@@ -93,18 +93,20 @@ public class HttpRequestUtil {
         return null;
     }
 
-    public static String executeLoginPost(String url) {
+    public static String executeLoginPost(String url, String username, String password) {
         Client client = null;
         try {
             client = ClientBuilder.newBuilder().build();
-            final Response response = client.target(url).property(ClientProperties.FOLLOW_REDIRECTS, Boolean.FALSE).request().post(null);
-            final String location = response.getHeaderString("Location");
-            if (response.getStatus() == Response.Status.FOUND.getStatusCode() && !(location == null)
-                    && !(location.endsWith("?error=true"))) {
+            String jsonText = "{\"user/id\": \"" + username + "\", \"user/password\": \"" + password + "\"}";
+            final Response response = client
+            		.target(url)
+            		.request(MediaType.APPLICATION_JSON_TYPE)
+                    .post(Entity.entity(jsonText, MediaType.APPLICATION_JSON_TYPE));
+            if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
                 final String token = response.readEntity(String.class).substring(9, 45);
                 return token;
             } else {
-                // TODO:REDIRECT以外のハンドリング
+                // TODO: 認証成功時以外のハンドリング
                 System.out.println(response.getStatus());
                 System.out.println(response.getStatusInfo());
             }
